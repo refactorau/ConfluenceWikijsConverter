@@ -12,8 +12,8 @@ import (
 )
 
 func normaliseFilename(fileName string) string {
-	re := regexp.MustCompile(`_\d+.html$`)
-	fileName = re.ReplaceAllString(fileName, "") + ".html"
+	re := regexp.MustCompile(`_\d+\.html$`)
+	fileName = re.ReplaceAllString(fileName, ".html")
 	return fileName
 }
 
@@ -39,23 +39,42 @@ func convertHtml(source string, destination string, fileName string) {
 		return
 	}
 
-	// Attempt to find and detach the "main-header" node
-	mainHeader, detached := findAndDetachNode(doc, "main-header")
+	// Attempt to find and detach the "breadcrumb-section" node
+	breadcrumbSection, detached := findAndDetachNode(doc, "breadcrumb-section", true)
+	numDeep := 0
 	if detached {
 		// Now find the breadcrumbs node
-		breadcrumbsNode, detached := findAndDetachNode(mainHeader, "breadcrumbs")
+		breadcrumbsNode, detached := findAndDetachNode(breadcrumbSection, "breadcrumbs", false)
 		if detached {
 			breadcrumbs := extractTextFromLI(breadcrumbsNode)
 			for _, breadcrumb := range breadcrumbs {
 				destination = destination + "/" + normaliseDirectory(breadcrumb)
+				numDeep = numDeep + 1
 			}
 		}
 	}
+
+	// Scan the entire HTML document, and every attribute. If the attribute starts with "attachments/" then update it to be "../attachments/"
+	var traverse func(*html.Node)
+	traverse = func(n *html.Node) {
+		if n.Type == html.ElementNode {
+			for i, a := range n.Attr {
+				if strings.HasPrefix(a.Val, "attachments/") {
+					n.Attr[i].Val = strings.Repeat("../", numDeep) + a.Val
+				}
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			traverse(c)
+		}
+	}
+	traverse(doc)
 
 	// After modifying the HTML document, write it back to a new file in the destination directory
 	os.MkdirAll(destination, os.ModePerm)
 	fileName = normaliseFilename(fileName)
 	newFilePath := destination + "/" + fileName
+	fmt.Printf("Convert: %s/%s => %s\n", source, fileName, newFilePath)
 	newFile, err := os.Create(newFilePath)
 	if err != nil {
 		fmt.Errorf("error creating file %s: %w", newFilePath, err)
@@ -103,7 +122,7 @@ func extractTextFromLI(n *html.Node) []string {
 
 // findAndDetachNode searches and detaches a node by id.
 // It returns the detached node and a boolean indicating if the operation was successful.
-func findAndDetachNode(n *html.Node, id string) (*html.Node, bool) {
+func findAndDetachNode(n *html.Node, id string, doDetach bool) (*html.Node, bool) {
 	var parent *html.Node
 	var nodeToDetach *html.Node
 
@@ -138,7 +157,10 @@ func findAndDetachNode(n *html.Node, id string) (*html.Node, bool) {
 		if nodeToDetach.NextSibling != nil {
 			nodeToDetach.NextSibling.PrevSibling = nodeToDetach.PrevSibling
 		}
-		nodeToDetach.Parent = nil
+	}
+
+	// Start the search and detach process
+	if nodeToDetach != nil {
 		return nodeToDetach, true
 	}
 	return nil, false
