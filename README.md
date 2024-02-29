@@ -22,10 +22,8 @@ f) run the following command:
 
 ```
 cd ConfluenceWikijsConverter
-go run ../FromConfluence /opt/wikijs/en/MyConfluence
+go run ../FromConfluence /opt/wikijs/MyConfluence
 ```
-
-Note the locale setting in the exported path. This seems to be required by wikijs and not having it causes wierd import failures.
 
 Then within wikijs admin...
 a) Storage -> Local File System
