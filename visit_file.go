@@ -7,21 +7,28 @@ import (
 	"strings"
 )
 
-func visitFile(fp string, fi os.FileInfo, err error, source string, destination string) error {
+func visitFile(root string, destination string, source string, target string, filesToMove []FileMove) error {
+
+	sourceFile := root + "/" + source
+	destFile := destination + "/" + target
+
+	dir := filepath.Dir(destFile)
+	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
-		fmt.Println(err) // can't walk here,
-		return nil       // but continue walking elsewhere
-	}
-	if !!fi.IsDir() {
-		return nil // not a file. ignore.
+		return err
 	}
 
-	dir := filepath.Dir(fp)       // get the directory of the file
-	fileName := filepath.Base(fp) // get the filename
+	if strings.HasSuffix(destFile, ".html") {
+		err = convertHtml(root, destination, source, target, filesToMove)
+		return err
+	}
 
-	if strings.HasPrefix(dir, source) {
-		dest_dir := destination + dir[len(source):]
-		convertFile(dir, dest_dir, fileName)
+	// If we get here we dont need to convert anything, just copy the file
+	fmt.Printf("Copy: %s => %s\n", sourceFile, destFile)
+	err = copyFile(sourceFile, destFile)
+	if err != nil {
+		fmt.Printf("Copy Failed: %s => %s (%s)\n", sourceFile, destFile, err)
+		return err
 	}
 	return nil
 }
