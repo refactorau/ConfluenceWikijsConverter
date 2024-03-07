@@ -1,6 +1,10 @@
 package main
 
-import "golang.org/x/net/html"
+import (
+	"strings"
+
+	"golang.org/x/net/html"
+)
 
 // findAndDetachNode searches and detaches a node by id.
 // It returns the detached node and a boolean indicating if the operation was successful.
@@ -13,6 +17,9 @@ func findAndDetachNode(n *html.Node, id string, doDetach bool) (*html.Node, bool
 		if n.Type == html.ElementNode {
 			for _, a := range n.Attr {
 				if a.Key == "id" && a.Val == id {
+					nodeToDetach = n
+					return true
+				} else if a.Key == "class" && strings.Contains(a.Val, id) {
 					nodeToDetach = n
 					return true
 				}

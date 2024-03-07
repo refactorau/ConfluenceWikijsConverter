@@ -28,6 +28,9 @@ func convertHtml(root string, destination string, source string, target string, 
 		return err
 	}
 
+	// Attempt to find and detach the "toc-macro" node
+	findAndDetachNode(doc, "toc-macro", true)
+
 	// Attempt to find and detach the "breadcrumb-section" node
 	breadcrumbSection, detached := findAndDetachNode(doc, "breadcrumb-section", true)
 	numDeep := -1
