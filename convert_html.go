@@ -47,6 +47,7 @@ func convertHtml(root string, destination string, source string, target string, 
 		}
 	}
 	// Scan the entire HTML document, and every attribute. If the attribute starts with "attachments/" then update it to be "../attachments/"
+	// ALSO normalise any "id" attributes while we are here.
 	var traverse func(*html.Node)
 	traverse = func(n *html.Node) {
 		if n.Type == html.ElementNode {
@@ -61,6 +62,10 @@ func convertHtml(root string, destination string, source string, target string, 
 						//fmt.Println("=========", a.Val, "===========", newVal)
 						n.Attr[i].Val = newVal
 					}
+				}
+
+				if a.Key == "id" || strings.HasPrefix(a.Val, "#") {
+					n.Attr[i].Val = normaliseIdentifier(a.Val)
 				}
 			}
 		}

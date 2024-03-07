@@ -11,6 +11,14 @@ import (
 	"golang.org/x/net/html"
 )
 
+func normaliseIdentifier(identifier string) string {
+	identifier = strings.ReplaceAll(identifier, "(", "_")
+	identifier = strings.ReplaceAll(identifier, ")", "_")
+	identifier = strings.ReplaceAll(identifier, ".", "_")
+	identifier = strings.ReplaceAll(identifier, "?", "_")
+	return identifier
+}
+
 func normaliseFilename(fileName string) string {
 	re := regexp.MustCompile(`_\d+\.html$`)
 	fileName = re.ReplaceAllString(fileName, ".html")
