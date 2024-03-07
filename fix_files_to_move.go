@@ -46,13 +46,18 @@ func fixFilesToMove(filesToMove *[]FileMove, root string) error {
 
 		// Attempt to find "breadcrumb-section" node
 		breadcrumbSection, _ := findAndDetachNode(doc, "breadcrumb-section", false)
-		//numDeep := 0
+		numDeep := -1
 		if breadcrumbSection != nil {
 			breadcrumbsNode, _ := findAndDetachNode(breadcrumbSection, "breadcrumbs", false)
 			if breadcrumbsNode != nil {
 				breadcrumbs := extractTextFromLI(breadcrumbsNode)
 				for _, breadcrumb := range breadcrumbs {
-					destinationDir = destinationDir + "/" + normaliseDirectory(breadcrumb)
+					if numDeep == -1 {
+						// This is the first link, so this is actually the home dir, so we dont need to add another directory
+					} else {
+						destinationDir = destinationDir + "/" + normaliseDirectory(breadcrumb)
+					}
+					numDeep = numDeep + 1
 				}
 			}
 		}

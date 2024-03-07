@@ -30,14 +30,18 @@ func convertHtml(root string, destination string, source string, target string, 
 
 	// Attempt to find and detach the "breadcrumb-section" node
 	breadcrumbSection, detached := findAndDetachNode(doc, "breadcrumb-section", true)
-	numDeep := 0
+	numDeep := -1
 	if detached {
 		// Now find the breadcrumbs node
 		breadcrumbsNode, detached := findAndDetachNode(breadcrumbSection, "breadcrumbs", false)
 		if detached {
 			breadcrumbs := extractTextFromLI(breadcrumbsNode)
 			for _, breadcrumb := range breadcrumbs {
-				destination = destination + "/" + normaliseDirectory(breadcrumb)
+				if numDeep == -1 {
+					// This is the first link, so this is actually the home dir, so we dont need to add another directory
+				} else {
+					destination = destination + "/" + normaliseDirectory(breadcrumb)
+				}
 				numDeep = numDeep + 1
 			}
 		}
@@ -50,7 +54,10 @@ func convertHtml(root string, destination string, source string, target string, 
 				// I cant believe I am doing this, but unless there are a LOT of files then its working fairly quickly
 				for _, fileMove := range filesToMove {
 					if strings.Contains(a.Val, fileMove.From) {
-						newVal := strings.Repeat("../", numDeep) + strings.ReplaceAll(a.Val, fileMove.From, fileMove.To)
+						newVal := strings.ReplaceAll(a.Val, fileMove.From, fileMove.To)
+						if numDeep != -1 {
+							newVal = strings.Repeat("../", numDeep) + newVal
+						}
 						//fmt.Println("=========", a.Val, "===========", newVal)
 						n.Attr[i].Val = newVal
 					}
